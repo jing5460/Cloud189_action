@@ -43,5 +43,5 @@ jobs:
           echo "共有 ${#acc_list[*]} 个账号, 即将开始签到..."
           for account in ${acc_list[*]}
           do
-          	echo python3 checkin.py ${account}
+          	echo python3 signAndDraw.py ${account}
           done
