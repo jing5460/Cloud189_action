@@ -235,6 +235,18 @@ class Client189:
         # draw_url = f'https://m.cloud.189.cn/v2/drawPrizeMarketDetails.action?taskId=TASK_SIGNIN&activityId=ACT_SIGNIN'
 
 
+def hide_username(u: str) -> str:
+    u_len = len(u)
+    fill_len = int(u_len * 0.3) + 1
+    b_index = int((u_len - fill_len) / 2)
+    e_index = u_len - fill_len - b_index
+    return u[:b_index] + "*" * fill_len + u[-e_index:]
+
+
+def print_msg(msg: str):
+    print(" "*4 + msg)
+
+
 if __name__ == '__main__':
     # 参数格式: 账号----密码
     if len(sys.argv) == 2 and len(sys.argv[1].split("----")) == 2:
@@ -243,10 +255,14 @@ if __name__ == '__main__':
     else:
         username = input("请输入账号: ")
         password = input("请输入登录密码: ")
+    username = username.strip()
+    password = password.strip()
 
-    cloud = Client189(username.strip(), password.strip())
-    print(cloud.msg)
+    print()
+    print(hide_username(username)+":")
+    cloud = Client189(username, password)
+    print_msg(cloud.msg)
     if not cloud.isLogin:
         exit(-1)
     cloud.sign()
-    print(cloud.msg)
+    print_msg(cloud.msg)
