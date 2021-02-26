@@ -1,0 +1,47 @@
+name: 签到
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: 0 8,20 * * *
+  watch:
+    types: started
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    if: github.event.repository.owner.id == github.event.sender.id
+
+    steps:
+      - name: 获取主分支上的源代码
+        uses: actions/checkout@v2
+      - name: 初始化 Python 运行环境
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+      - name: 执行签到
+        run: |
+          pip install -r requirements.txt
+
+          OLD_IFS=$IFS
+          IFS=$'\n'
+          acc_list=(${{ secrets.ACCS }})
+
+          IFS='----'
+          for ((i=0; i<${#acc_list[*]}; i++))
+          do
+          	temp=(${acc_list[${i}]})
+          	if [ ${#temp[*]} != 5 ]
+          	then
+          		echo "第 ${i+1} 行账号格式不正确"
+          		exit 1
+          	fi
+          done
+          IFS=$OLD_IFS
+
+
+          echo "共有 ${#acc_list[*]} 个账号, 即将开始签到..."
+          for account in ${acc_list[*]}
+          do
+          	echo python3 checkin.py ${account}
+          done
