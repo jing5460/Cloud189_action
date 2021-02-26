@@ -178,6 +178,7 @@ class Client189:
             data = json.loads(json.dumps(res))
             self.user.sessionKey = data.get("userSession").get("sessionKey")
             self.user.sessionSecret = data.get("userSession").get("sessionSecret")
+            self.msg = "登录成功"
 
             self.isLogin = True
             return True
@@ -244,8 +245,8 @@ if __name__ == '__main__':
         password = input("请输入登录密码: ")
 
     cloud = Client189(username.strip(), password.strip())
+    print(cloud.msg)
     if not cloud.isLogin:
-        print(cloud.msg)
         exit(-1)
     cloud.sign()
     print(cloud.msg)
