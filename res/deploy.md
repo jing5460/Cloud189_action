@@ -1,18 +1,16 @@
 ## 部署指南
 
 ### 一、Fork 此仓库
-点击右上角的 fork 按钮即可
+点击项目右上角的 fork 按钮即可\
 ![fork me](./step1_fork.png)
 
 
 ### 二、设置账号密码
 为项目运行设置必要参数
-> 设置路径: Settings-->Secrets-->New secret
+> 设置路径: Settings-->Secrets-->New repository secret
 
-Name: ACCS
+Name: ACCS\
 Value: 如下所示
-
-示例：
 ```text
 username----password
 xtyuns----123456
@@ -25,7 +23,7 @@ xtyuns----123456
 
 
 ### 三、启用 Actions
-首先切换到 Actions 选项卡
+首先切换到 Actions 选项卡\
 再点击 **I understand my workflows, go ahead and enable them** 按钮即可启用 Actions
 ![启用 Actions](./step3_actions.png)
 
@@ -36,5 +34,6 @@ xtyuns----123456
 
 
 ### 五、运行日志
-在 Actions 选项卡中可以浏览所有 Actions 运行记录
-点击任意记录 -> build, 即可查看详细日志信息
+在 Actions 选项卡中可以浏览所有 Actions 运行记录\
+点击任意记录 ```Auto run -> run -> 执行任务```, 即可查看运行日志信息
+![启用 Actions](./step5_log.png)
