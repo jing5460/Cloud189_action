@@ -1,4 +1,3 @@
-import time
 from urllib import parse
 from cloud189 import utils
 from cloud189 import consts
@@ -37,7 +36,7 @@ class Client:
         return True
 
     def mergedSession(self, accessToken: str):
-        rand = str(int(time.time()*1000))
+        rand = str(utils.getTimestamp())
         data = {
             "rand": rand,
             "accessToken": accessToken,
@@ -54,7 +53,7 @@ class Client:
         appkey = "600100885"
         headers = {
             "appkey": appkey,
-            "appsignature": crypto.getSignatureHex(f"AppKey={appkey}&Operate=POST&RequestURI=/login4MergedClient.action&Timestamp={rand}"),
+            "appsignature": crypto.getSignatureHex(f"AppKey={appkey}&Operate=POST&RequestURI=/login4MergedClient.action&Timestamp={rand}").upper(),
             "timestamp": rand
         }
 
@@ -113,16 +112,43 @@ class Client:
         self.user.nickName = data.get("nickName")[0]
 
         if self.mergedSession(data.get("accessToken")[0]):
-            self.msg = self.user.nickName + " 恭喜你, 登录成功"
+            self.msg = self.user.nickName + ", 登录成功"
             return True
         return False
 
     def sign(self):
         if not self.checkLogin():
             return False
-        # todo: 用户签到
-        self.msg = "签到功能正在开发中..."
-        return False
+        rand = str(utils.getTimestamp())
+        params = {
+            "rand": rand,
+            "clientType": self.configInfo.get("client", "clientType"),
+            "version": self.configInfo.get("client", "clientVersion"),
+            "model": self.configInfo.get("device", "mobileModel")
+        }
+        t = utils.CST2GMTString(int(rand))
+        headers = {
+            "sessionkey": self.user.sessionKey,
+            "date": t,
+            "signature": crypto.getSignatureHex(f"SessionKey={self.user.sessionKey}&Operate=GET&RequestURI=/mkt/userSign.action&Date={t}", self.user.sessionSecret)
+        }
+        url = consts.URL_2_userSign+"?"+parse.urlencode(params)
+        response = utils.sendGetRequest(self.__session, url, consts.HeaderType_Signature_2, headers)
+        data = utils.xml2dict(response.text)
+
+        flag = False
+        if "error" in data:
+            self.msg = data['error']['message']
+        elif "userSignResult" not in data:
+            self.msg = str(data) if str(data) != "" else "请求失败"
+        elif data['userSignResult']['result'] == '1':
+            flag = True
+            self.msg = "签到成功, "+data['userSignResult']['resultTip']
+        elif data['userSignResult']['result'] == '-1':
+            self.msg = "不能重复签到, 今日已"+data['userSignResult']['resultTip']
+        else:
+            self.msg = data['userSignResult']['resultTip']
+        return flag
 
     def draw(self):
         if not self.checkLogin():

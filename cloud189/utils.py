@@ -4,6 +4,7 @@ import hashlib
 import json
 import uuid
 import os
+import time
 from configparser import ConfigParser
 from urllib.parse import urlparse
 from cloud189.consts import *
@@ -91,6 +92,22 @@ def sendPostRequest(session, url, data, headerType=1, headers=None):
         headers = {}
     headers.update(getRequestHeaders(url, headerType))
     return session.post(url, data=data, headers=headers)
+
+
+def getTimestamp(isSecond: bool = False) -> int:
+    r"""return millisecond-timestamp(13) or second-timestamp(10)"""
+    t = time.time()
+    t = t if isSecond else t*1000
+    return int(t)
+
+
+def CST2GMTString(millisecond: int) -> str:
+    r"""CST millisecond to GMT string"""
+
+    millisecond -= 28800 * 1000
+    t = time.strftime("%a, %d %b %Y %X GMT", time.localtime(millisecond / 1000))
+    t = t.replace(", 0", ", ")
+    return t
 
 
 def xml2dict(xml_data: str) -> dict:

@@ -14,14 +14,15 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-      - name: 初始化 Python 运行环境
+      - name: Install Python 3.8
         uses: actions/setup-python@v2
         with:
           python-version: 3.8
-      - name: 执行任务
+      - name: Initialization environment
         run: |
           pip install -r requirements.txt
-
+      - name: 执行任务
+        run: |
           OLD_IFS=$IFS
           IFS=$'\n'
           acc_list=(${{ secrets.ACCS }})
@@ -29,12 +30,12 @@ jobs:
           IFS='----'
           for ((i=0; i<${#acc_list[*]}; i++))
           do
-          	temp=(${acc_list[${i}]})
-          	if [ ${#temp[*]} != 5 ]
-          	then
-          		echo "第 ${i+1} 行账号格式不正确"
-          		exit 1
-          	fi
+              temp=(${acc_list[${i}]})
+              if [ ${#temp[*]} != 5 ]
+              then
+                  echo "第 ${i+1} 行账号格式不正确"
+                  exit 1
+              fi
           done
           IFS=$OLD_IFS
 
@@ -42,6 +43,6 @@ jobs:
           echo "共有 ${#acc_list[*]} 个账号, 即将开始签到..."
           for account in ${acc_list[*]}
           do
-          	python3 action.py ${account}
+              python3 action.py ${account}
           done
           echo "任务执行完毕!"
