@@ -8,7 +8,7 @@ on:
     types: started
 
 jobs:
-  run action:
+  run:
     runs-on: ubuntu-latest
     if: github.event.repository.owner.id == github.event.sender.id
 
