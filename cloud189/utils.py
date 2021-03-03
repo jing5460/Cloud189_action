@@ -25,6 +25,8 @@ def getConfigInfo(section, key):
     r"""read data form ConfigInfo.ini
 
     example: getConfigInfo("device", "osType")
+
+    this method will be removed in 0.2.0
     """
 
     return __ini.get(section, key)
@@ -37,6 +39,8 @@ def initRequestSession():
 
 
 def getRequestHeaders(url: str, header_Type=HeaderType_Origin_1) -> dict:
+    r"""this method will be removed in 0.2.0"""
+
     headers = dict()
     parser = urlparse(url)
     headers['Host'] = parser.hostname

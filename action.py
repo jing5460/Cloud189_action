@@ -25,8 +25,11 @@ def hide_username(name: str) -> str:
 
 
 def print_msg(msg: str = "", isFirstLine: bool = False):
-    indent = " " * 4 if not isFirstLine else ""
-    print(indent + msg)
+    if isFirstLine or msg == "":
+        indent = ""
+    else:
+        indent = " " * 4
+    print(indent + msg.replace("\n", "\n"+indent))
 
 
 if __name__ == '__main__':

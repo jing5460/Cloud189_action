@@ -1,3 +1,5 @@
+import json
+import random
 from urllib import parse
 from cloud189 import utils
 from cloud189 import consts
@@ -153,6 +155,113 @@ class Client:
     def draw(self):
         if not self.checkLogin():
             return False
-        # todo: 用户抽奖
-        self.msg = "抽奖功能正在开发中..."
-        return False
+        if self.getDrawNum() is None:
+            # 签到之前必须调用 getDrawNum() 方法
+            return False
+
+        headers = {
+            "user-agent": self.getUserAgentString(2) + " " + self.getUserAgentString(5),
+            "x-requested-with": "XMLHttpRequest",
+            "referer": consts.URL_1_drawPage + "?albumBackupOpened=0"
+        }
+        url = consts.URL_1_drawPrizeMarketDetails + "?activityId=ACT_SIGNIN&noCache="+str(random.random())
+        response = utils.sendGetRequest(self.__session, url + "&taskId=TASK_SIGNIN", 0, headers)
+        data = json.loads(response.text)
+        self.msg = "签到抽奖: "
+        if "prizeName" in data:
+            self.msg += data['prizeName']
+        elif "errorCode" in data:
+            self.msg += data['errorCode']
+        else:
+            self.msg = response.text
+
+        utils.sendGetRequest(self.__session, consts.URL_1_act + "?act=10", 0, headers)
+        headers['referer'] = str(headers['referer'])[:-1] + "1"
+        url = consts.URL_1_drawPrizeMarketDetails + "?activityId=ACT_SIGNIN&noCache=" + str(random.random())
+        response = utils.sendGetRequest(self.__session, url + "&taskId=TASK_SIGNIN_PHOTOS", 0, headers)
+        data = json.loads(response.text)
+        self.msg += "\n相册抽奖: "
+        if "prizeName" in data:
+            self.msg += data['prizeName']
+        elif "errorCode" in data:
+            self.msg += data['errorCode']
+        else:
+            self.msg = response.text
+        return self.msg
+
+    def getDrawNum(self):
+        r"""获取今日抽奖次数
+        返回整型抽奖次数 或 None
+        """
+
+        html = self.ssoLogin(consts.URL_1_drawPage + "?albumBackupOpened=0")
+        b_index = html.find("今天还有<em>")+8
+        e_index = html.find("</em>次抽红包机会")
+        if b_index == 7:
+            self.msg = "进入抽奖页面失败"
+            return None
+        num = int(html[b_index:e_index])
+        num += 1 if html.find("<p>开启自动备份后可<em>+1</em>次抽红包机会</p>") != -1 else 0
+        return num
+
+    def ssoLogin(self, redirectUrl):
+        params = {
+            "sessionKey": self.user.sessionKey,
+            "sessionKeyFm": self.user.familySessionKey,
+            "appName": self.configInfo.get("client", "clientPackageName"),
+            "redirectUrl": redirectUrl
+        }
+        url = consts.URL_1_ssoLoginMerge + "?" + parse.urlencode(params)
+        headers = {
+            "User-Agent": self.getUserAgentString(2) + " " + self.getUserAgentString(5),
+            "x-requested-with": self.configInfo.get("client", "clientPackageName")
+        }
+        response = utils.sendGetRequest(self.__session, url, 0, headers)
+
+        return response.text
+
+    def getUserAgentString(self, ua_type: int = 1):
+        r""" return User-Agent info
+
+        1. (http.agent): Dalvik/2.1.0 (Linux; U; Android 5.1.1; OPPO R11 Plus Build/NMF26X)
+        2. (webview User-Agent): Mozilla/5.0 (Linux; Android 10; MI MIX3 Build/QKQ1.190828.002; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/87.0.4280.66 Mobile Safari/537.36
+        3. (client info): clientCtaSdkVersion/v3.8.1 deviceSystemVersion/10 deviceSystemType/Android clientPackageName/com.cn21.ecloud clientPackageNameSign/1c71af12beaa24e4d4c9189f3c9ad576
+        4. (util_User-Agent_3): Ecloud/8.9.0 (MI MIX3; ; uc) Android/29
+        5. (util_User-Agent_4): Ecloud/8.9.0 Android/29 clientId/null clientModel/MIX 3 imsi/null clientChannelId/uc proVersion/1.0.6
+        """
+
+        if ua_type in (1, 2):
+            osType = self.configInfo.get("device", "osType")
+            osVersion = self.configInfo.get("device", "osVersion")
+            mobileModel = self.configInfo.get("device", "mobileModel")
+            buildId = self.configInfo.get("device", "buildId")
+
+            if ua_type == 1:
+                return f"Dalvik/2.1.0 (Linux; U; {osType} {osVersion}; {mobileModel} Build/{buildId})"
+            elif ua_type == 2:
+                return f"Mozilla/5.0 (Linux; {osType} {osVersion}; {mobileModel} Build/{buildId}; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/87.0.4280.66 Mobile Safari/537.36"
+        elif ua_type == 3:
+            clientCtaSdkVersion = self.configInfo.get("client", "clientCtaSdkVersion")
+            osVersion = self.configInfo.get("device", "osVersion")
+            osType = self.configInfo.get("device", "osType")
+            clientPackageName = self.configInfo.get("client", "clientPackageName")
+            clientPackageNameSign = self.configInfo.get("client", "clientPackageNameSign")
+
+            return f"clientCtaSdkVersion/v{clientCtaSdkVersion} deviceSystemVersion/{osVersion} deviceSystemType/{osType} clientPackageName/{clientPackageName} clientPackageNameSign/{clientPackageNameSign}"
+        elif ua_type in (4, 5):
+            clientVersion = self.configInfo.get("client", "clientVersion")
+            proVersion = self.configInfo.get("client", "proVersion")
+            mobileModel = self.configInfo.get("device", "mobileModel")
+            osType = self.configInfo.get("device", "osType")
+            osVersion = self.configInfo.get("device", "osVersion")
+            imei = self.configInfo.get("device", "imei")
+            imsi = self.configInfo.get("device", "imsi")
+            imei = imei if imsi != "" else "null"
+            imsi = imsi if imsi != "" else "null"
+
+            if ua_type == 4:
+                return f"Ecloud/{clientVersion} ({mobileModel}; ; uc) {osType}/{osVersion}"
+            elif ua_type == 5:
+                return f"Ecloud/{clientVersion} {osType}/{osVersion} clientId/{imei} clientModel/{mobileModel} imsi/{imsi} clientChannelId/uc proVersion/{proVersion}"
+
+
