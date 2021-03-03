@@ -147,7 +147,7 @@ class Client:
         elif data['userSignResult']['result'] == '-1':
             self.msg = "不能重复签到, 今日已"+data['userSignResult']['resultTip']
         else:
-            self.msg = data['userSignResult']['resultTip']
+            self.msg = "[" + data['userSignResult']['result'] + "]: " + data['userSignResult']['resultTip']
         return flag
 
     def draw(self):
