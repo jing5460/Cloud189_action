@@ -112,7 +112,7 @@ class Client:
             "headerDeviceId": self.configInfo.get("device", "guid")
         }
         headers = {
-            "User-Agent": self.__getUserAgentString(2) + " " + self.__getUserAgentString(4),
+            "User-Agent": self.__getUserAgentString(2) + " " + self.__getUserAgentString(3),
             "X-Requested-With": self.configInfo.get("client", "clientPackageName")
         }
 
