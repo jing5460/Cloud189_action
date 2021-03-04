@@ -1,28 +1,25 @@
-import json
 import random
 from urllib import parse
-from cloud189 import utils
-from cloud189 import consts
-from cloud189.UserInfo import UserInfo
-from cloud189.libs import crypto
+from cloud189app import utils, consts
+from cloud189app.libs import *
 
 
 class Client:
     def __init__(self, username, password):
-        self.__session = utils.initRequestSession()
-        self.configInfo = utils.initConfigInfo(username, password)
+        self.configInfo = utils.initConfigInfo(crypto.md5(username+password), crypto.md5(password))
+        self.__session = utils.initRequestSession(self.__getUserAgentString(2) + " " + self.__getUserAgentString(3))
         self.user = UserInfo(username, password)
         self.msg = ""
         self.isLogin = self.login()
 
-    def checkLogin(self):
+    def __checkLogin(self):
         if self.isLogin:
             return True
         else:
             self.msg = "请先登录账号"
             return False
 
-    def needCaptcha(self):
+    def __needCaptcha(self):
         data = {
             "appKey": "cloud",
             "userName": "{RSA}" + crypto.rsa_encryptHex(self.user.username),
@@ -30,14 +27,21 @@ class Client:
             "reqId": "undefined",
             "headerDeviceId": self.configInfo.get("device", "guid")
         }
-        response = utils.sendPostRequest(self.__session, consts.URL_1_needCaptcha, data, consts.HeaderType_Origin_1)
+        headers = {
+            "X-Requested-With": self.configInfo.get("client", "clientPackageName")
+        }
+        response = utils.sendPostRequest(self.__session, consts.URL_1_needCaptcha, data, headers)
 
-        if response.text != 0:
+        if response.text != "0":
             self.msg = "当前账号登录需要验证, 请在手机端完成登录后重试"
-            return False
-        return True
+            return True
+        return False
 
-    def mergedSession(self, accessToken: str):
+    def __mergedSession(self, accessToken: str):
+        # build url
+        url = consts.URL_2_login4MergedClient
+
+        # build data
         rand = str(utils.getTimestamp())
         data = {
             "rand": rand,
@@ -52,14 +56,21 @@ class Client:
             "telecomsOperator": "unknow",
             "channelId": "uc"
         }
+
+        # build headers
         appkey = "600100885"
+        sign = f"AppKey={appkey}&Operate=POST&RequestURI={utils.getRequestURI(url)}&Timestamp={rand}"
         headers = {
             "appkey": appkey,
-            "appsignature": crypto.getSignatureHex(f"AppKey={appkey}&Operate=POST&RequestURI=/login4MergedClient.action&Timestamp={rand}").upper(),
-            "timestamp": rand
+            "appsignature": crypto.getSignatureHex(sign).upper(),
+            "timestamp": rand,
+            "user-agent": self.__getUserAgentString(4)
         }
 
-        response = utils.sendPostRequest(self.__session, consts.URL_2_login4MergedClient, data, consts.HeaderType_Signature_2, headers)
+        # send request
+        response = utils.sendPostRequest(self.__session, url, data, headers)
+
+        # parse data
         data = utils.xml2dict(response.text)
         if "userSession" in data:
             self.user.sessionKey = data['userSession']['sessionKey']
@@ -75,21 +86,15 @@ class Client:
     def login(self):
         r"""登录失败则由失败方法设置提示信息, login() 方法中只负责设置最终登录成功提示"""
 
-        if self.needCaptcha():
+        if self.__needCaptcha():
             return False
 
-        deviceInfo = {
-            'imei': None, 'imsi': None, 'deviceId': None, 'terminalInfo': None,
-            'osInfo': None, 'mobileBrand': None, 'mobileModel': None
-        }
-        for key in deviceInfo.keys():
-            if self.configInfo.has_option("device", key.lower()):
-                deviceInfo[key] = self.configInfo.get("device", key.lower())
-            deviceInfo['terminalInfo'] = self.configInfo.get("device", "mobileModel".lower())
-            deviceInfo['osInfo'] = self.configInfo.get("device", "osType".lower()) + ":" + self.configInfo.get("device", "osVersion".lower())
+        url = consts.URL_1_oAuth2SdkLoginByPassword
+
+        deviceInfo = str(self.__buildDeviceInfo()).replace("'", '"')
         data = {
             "appKey": "cloud",
-            "deviceInfo": crypto.encryptHex(str(deviceInfo)),
+            "deviceInfo": crypto.encryptHex(deviceInfo),
             "apptype": "wap",
             "loginType": "1",
             "dynamicCheck": "false",
@@ -106,21 +111,27 @@ class Client:
             "reqId": "undefined",
             "headerDeviceId": self.configInfo.get("device", "guid")
         }
-        response = utils.sendPostRequest(self.__session, consts.URL_1_oAuth2SdkLoginByPassword, data, consts.HeaderType_Origin_1)
-        if str(response.json()["result"]) != "0":
-            self.msg = response.json()["msg"]
-            return False
-        data = parse.parse_qs(crypto.decryptHex(parse.parse_qs(response.json()["returnParas"]).get("paras")[0]))
-        self.user.nickName = data.get("nickName")[0]
+        headers = {
+            "User-Agent": self.__getUserAgentString(2) + " " + self.__getUserAgentString(4),
+            "X-Requested-With": self.configInfo.get("client", "clientPackageName")
+        }
 
-        if self.mergedSession(data.get("accessToken")[0]):
+        response = utils.sendPostRequest(self.__session, url, data, headers=headers)
+        result = response.json()
+        if str(result["result"]) != "0":
+            self.msg = result["msg"]
+            return False
+        data = parse.parse_qs(crypto.decryptHex(parse.parse_qs(result["returnParas"]).get("paras")[0]))
+        self.user.nickName = data.get("nickName")[0]
+        if self.__mergedSession(data.get("accessToken")[0]):
             self.msg = self.user.nickName + ", 登录成功"
             return True
         return False
 
     def sign(self):
-        if not self.checkLogin():
+        if not self.__checkLogin():
             return False
+
         rand = str(utils.getTimestamp())
         params = {
             "rand": rand,
@@ -128,83 +139,81 @@ class Client:
             "version": self.configInfo.get("client", "clientVersion"),
             "model": self.configInfo.get("device", "mobileModel")
         }
+        url = consts.URL_2_userSign + "?" + parse.urlencode(params)
         t = utils.CST2GMTString(int(rand))
+        sign = f"SessionKey={self.user.sessionKey}&Operate=GET&RequestURI={utils.getRequestURI(url)}&Date={t}"
         headers = {
             "sessionkey": self.user.sessionKey,
             "date": t,
-            "signature": crypto.getSignatureHex(f"SessionKey={self.user.sessionKey}&Operate=GET&RequestURI=/mkt/userSign.action&Date={t}", self.user.sessionSecret)
+            "signature": crypto.getSignatureHex(sign, self.user.sessionSecret),
+            "user-agent": self.__getUserAgentString(4)
         }
-        url = consts.URL_2_userSign+"?"+parse.urlencode(params)
-        response = utils.sendGetRequest(self.__session, url, consts.HeaderType_Signature_2, headers)
-        data = utils.xml2dict(response.text)
+        response = utils.sendGetRequest(self.__session, url, headers)
+        result = utils.xml2dict(response.text)
 
         flag = False
-        if "error" in data:
-            self.msg = data['error']['message']
-        elif "userSignResult" not in data:
-            self.msg = str(data) if str(data) != "" else "请求失败"
-        elif data['userSignResult']['result'] == '1':
+        if "error" in result:
+            self.msg = result['error']['message']
+        elif "userSignResult" not in result:
+            self.msg = response.text if response.text != "" else "请求失败"
+        elif result['userSignResult']['result'] == '1':
             flag = True
-            self.msg = "签到成功, "+data['userSignResult']['resultTip']
-        elif data['userSignResult']['result'] == '-1':
-            self.msg = "不能重复签到, 今日已"+data['userSignResult']['resultTip']
+            self.msg = "签到成功, " + result['userSignResult']['resultTip']
+        elif result['userSignResult']['result'] == '-1':
+            self.msg = "不能重复签到, 今日已" + result['userSignResult']['resultTip']
         else:
-            self.msg = "[" + data['userSignResult']['result'] + "]: " + data['userSignResult']['resultTip']
+            self.msg = "[" + result['userSignResult']['result'] + "]: " + result['userSignResult']['resultTip']
         return flag
 
     def draw(self):
-        if not self.checkLogin():
+        if not self.__checkLogin():
             return False
-        if self.getDrawNum() is None:
-            # 签到之前必须调用 getDrawNum() 方法
-            return False
+        url = consts.URL_1_drawPage + "?albumBackupOpened=0"
+        self.__ssoLogin(url)
 
         headers = {
-            "user-agent": self.getUserAgentString(2) + " " + self.getUserAgentString(5),
+            "user-agent": self.__getUserAgentString(2) + " " + self.__getUserAgentString(3),
             "x-requested-with": "XMLHttpRequest",
-            "referer": consts.URL_1_drawPage + "?albumBackupOpened=0"
+            "referer": url
         }
-        url = consts.URL_1_drawPrizeMarketDetails + "?activityId=ACT_SIGNIN&noCache="+str(random.random())
-        response = utils.sendGetRequest(self.__session, url + "&taskId=TASK_SIGNIN", 0, headers)
-        data = json.loads(response.text)
+        params = {
+            "activityId": "ACT_SIGNIN",
+            "taskId": "TASK_SIGNIN",
+            "noCache": str(random.random())
+        }
+        url = consts.URL_1_drawPrizeMarketDetails + "?" + parse.urlencode(params)
+
+        response = utils.sendGetRequest(self.__session, url, headers)
+        result = response.json()
         self.msg = "签到抽奖: "
-        if "prizeName" in data:
-            self.msg += data['prizeName']
-        elif "errorCode" in data:
-            self.msg += data['errorCode']
+        if "prizeName" in result:
+            self.msg += result['prizeName']
+        elif "errorCode" in result:
+            self.msg += result['errorCode']
         else:
             self.msg = response.text
 
-        utils.sendGetRequest(self.__session, consts.URL_1_act + "?act=10", 0, headers)
+        utils.sendGetRequest(self.__session, consts.URL_1_act + "?act=10", headers)
+
+        params['noCache'] = str(random.random())
+        params['taskId'] = "TASK_SIGNIN_PHOTOS"
+        url = consts.URL_1_drawPrizeMarketDetails + "?" + parse.urlencode(params)
         headers['referer'] = str(headers['referer'])[:-1] + "1"
-        url = consts.URL_1_drawPrizeMarketDetails + "?activityId=ACT_SIGNIN&noCache=" + str(random.random())
-        response = utils.sendGetRequest(self.__session, url + "&taskId=TASK_SIGNIN_PHOTOS", 0, headers)
-        data = json.loads(response.text)
+        response = utils.sendGetRequest(self.__session, url, headers)
+
+        result = response.json()
         self.msg += "\n相册抽奖: "
-        if "prizeName" in data:
-            self.msg += data['prizeName']
-        elif "errorCode" in data:
-            self.msg += data['errorCode']
+        if "prizeName" in result:
+            self.msg += result['prizeName']
+        elif "errorCode" in result:
+            self.msg += result['errorCode']
         else:
             self.msg = response.text
         return self.msg
 
-    def getDrawNum(self):
-        r"""获取今日抽奖次数
-        返回整型抽奖次数 或 None
-        """
+    def __ssoLogin(self, redirectUrl) -> str:
+        r"""add ['COOKIE_LOGIN_USER']"""
 
-        html = self.ssoLogin(consts.URL_1_drawPage + "?albumBackupOpened=0")
-        b_index = html.find("今天还有<em>")+8
-        e_index = html.find("</em>次抽红包机会")
-        if b_index == 7:
-            self.msg = "进入抽奖页面失败"
-            return None
-        num = int(html[b_index:e_index])
-        num += 1 if html.find("<p>开启自动备份后可<em>+1</em>次抽红包机会</p>") != -1 else 0
-        return num
-
-    def ssoLogin(self, redirectUrl):
         params = {
             "sessionKey": self.user.sessionKey,
             "sessionKeyFm": self.user.familySessionKey,
@@ -213,14 +222,28 @@ class Client:
         }
         url = consts.URL_1_ssoLoginMerge + "?" + parse.urlencode(params)
         headers = {
-            "User-Agent": self.getUserAgentString(2) + " " + self.getUserAgentString(5),
+            "User-Agent": self.__getUserAgentString(2) + " " + self.__getUserAgentString(3),
             "x-requested-with": self.configInfo.get("client", "clientPackageName")
         }
-        response = utils.sendGetRequest(self.__session, url, 0, headers)
+        response = utils.sendGetRequest(self.__session, url, headers)
 
         return response.text
 
-    def getUserAgentString(self, ua_type: int = 1):
+    def __buildDeviceInfo(self) -> dict:
+        deviceInfo = {
+            'imei': None, 'imsi': None, 'deviceId': None, 'terminalInfo': None,
+            'osInfo': None, 'mobileBrand': None, 'mobileModel': None
+        }
+        for key in deviceInfo.keys():
+            if self.configInfo.has_option("device", key):
+                deviceInfo[key] = self.configInfo.get("device", key)
+            deviceInfo['terminalInfo'] = deviceInfo['mobileModel']
+            deviceInfo['osInfo'] = self.configInfo.get("device", "osType")
+            deviceInfo['osInfo'] = deviceInfo['osInfo'] + ":" + self.configInfo.get("device", "osVersion")
+
+        return deviceInfo
+
+    def __getUserAgentString(self, ua_type: int = 1):
         r""" return User-Agent info
 
         1. (http.agent): Dalvik/2.1.0 (Linux; U; Android 5.1.1; OPPO R11 Plus Build/NMF26X)
@@ -241,7 +264,7 @@ class Client:
             elif ua_type == 2:
                 return f"Mozilla/5.0 (Linux; {osType} {osVersion}; {mobileModel} Build/{buildId}; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/87.0.4280.66 Mobile Safari/537.36"
         elif ua_type == 3:
-            clientCtaSdkVersion = self.configInfo.get("client", "clientCtaSdkVersion")
+            clientCtaSdkVersion = self.configInfo.get("client", "ctaSdkVersion")
             osVersion = self.configInfo.get("device", "osVersion")
             osType = self.configInfo.get("device", "osType")
             clientPackageName = self.configInfo.get("client", "clientPackageName")
@@ -265,3 +288,14 @@ class Client:
                 return f"Ecloud/{clientVersion} {osType}/{osVersion} clientId/{imei} clientModel/{mobileModel} imsi/{imsi} clientChannelId/uc proVersion/{proVersion}"
 
 
+class UserInfo:
+    def __init__(self, username, password):
+        self.username = username
+        self.password = password
+        self.nickName = None
+
+        self.sessionKey = None
+        self.sessionSecret = None
+        self.eAccessToken = None
+        self.familySessionKey = None
+        self.familySessionSecret = None

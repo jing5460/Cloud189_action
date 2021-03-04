@@ -1,11 +1,11 @@
 import sys
-from cloud189 import *
+from cloud189app import *
 
 
 def main(user: str, pwd: str):
     print_msg()
     print_msg(hide_username(user) + ":", True)
-    cloud = Client.Client(user, pwd)
+    cloud = Client(user, pwd)
     print_msg(cloud.msg)
     if not cloud.isLogin:
         exit(-1)
@@ -29,7 +29,8 @@ def print_msg(msg: str = "", isFirstLine: bool = False):
         indent = ""
     else:
         indent = " " * 4
-    print(indent + msg.replace("\n", "\n"+indent))
+        msg = msg.replace("\n", "\n"+indent)
+    print(indent + msg)
 
 
 if __name__ == '__main__':

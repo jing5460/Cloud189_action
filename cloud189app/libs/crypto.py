@@ -1,6 +1,7 @@
 import xxtea
 import rsa
 import hmac
+import hashlib
 
 
 def getSignatureHex(data: str, sessionSecret: str = None):
@@ -40,6 +41,10 @@ def rsa_encryptHex(data: str, publicKey: str = None):
     else:
         rsa_publicKey = rsa.PublicKey.load_pkcs1_openssl_pem(f"-----BEGIN PUBLIC KEY-----\n{publicKey}\n-----END PUBLIC KEY-----".encode("utf-8"))
     return rsa.encrypt(data.encode("utf-8"), rsa_publicKey).hex()
+
+
+def md5(string: str, encoding="utf-8"):
+    return hashlib.md5(string.encode(encoding)).hexdigest()
 
 
 class Keys:
