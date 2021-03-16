@@ -120,6 +120,13 @@ class Client:
         result = response.json()
         if str(result["result"]) != "0":
             self.msg = result["msg"]
+
+            r"""(需要设备锁验证) -> "result":-133, "msg":"绑定设备ID不存在", "isSystem":0... """
+            if result['result'] == -133:
+                if result['isSystem'] == 1:
+                    self.msg = "为了您的账号安全，请进行短信验证，并修改密码解除异常。"
+                else:
+                    self.msg = "(设备锁)为保障您的天翼账号安全，当前设备需进行身份验证。"
             return False
         data = parse.parse_qs(crypto.decryptHex(parse.parse_qs(result["returnParas"]).get("paras")[0]))
         self.user.nickName = data.get("nickName")[0]
