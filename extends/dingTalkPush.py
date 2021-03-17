@@ -16,10 +16,10 @@ def push_text(msg, webhook: str, secret: str):
     data = {
         "msgtype": "text",
         "text": {
-            "content": msg
+            "content": "[cloud189app-action]"+msg
         }
     }
     data = json.dumps(data).encode("utf-8")
     headers = {"Content-Type": "application/json"}
 
-    return requests.post(url, data=data, headers=headers).text
+    return requests.post(url, data=data, headers=headers).json()['errmsg']

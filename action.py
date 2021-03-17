@@ -5,14 +5,19 @@ from extends import *
 
 
 def push_msg(log):
+    msg = ""
     DINGTALK_WEBHOOK = os.getenv("DINGTALK_WEBHOOK").strip()
     DINGTALK_SECRET = os.getenv("DINGTALK_SECRET").strip()
     PUSHPLUS_TOKEN = os.getenv("PUSHPLUS_TOKEN").strip()
 
     if len(DINGTALK_WEBHOOK) > 0 and len(DINGTALK_SECRET) > 0:
-        dingTalkPush.push_text(log, DINGTALK_WEBHOOK, DINGTALK_SECRET)
+        r = dingTalkPush.push_text(log, DINGTALK_WEBHOOK, DINGTALK_SECRET)
+        msg += "\n钉钉推送: " + r
     if len(PUSHPLUS_TOKEN) > 0:
-        pushPlusPush.push_text(log, PUSHPLUS_TOKEN)
+        r = pushPlusPush.push_text(log, PUSHPLUS_TOKEN)
+        msg += "\nPushPlus推送: " + r
+
+    return msg
 
 
 def main(user: str, pwd: str):
@@ -27,9 +32,8 @@ def main(user: str, pwd: str):
     log += print_msg(cloud.msg)
     cloud.draw()
     log += print_msg(cloud.msg)
-    print_msg()
 
-    push_msg(log)
+    print_msg(push_msg(log))
 
 
 def hide_username(name: str) -> str:
