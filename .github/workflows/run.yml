@@ -23,7 +23,7 @@ jobs:
           pip install -r requirements.txt
       - name: 执行任务
         env:
-          DINGTALK_WEBHOOK: ${{ secrets.DingTalk_Webhook }}
+          DINGTALK_WEBHOOK: ${{ secrets.DINGTALK_WEBHOOK }}
           DINGTALK_SECRET: ${{ secrets.DINGTALK_SECRET }}
           PUSHPLUS_TOKEN: ${{ secrets.PUSHPLUS_TOKEN }}
         run: |
