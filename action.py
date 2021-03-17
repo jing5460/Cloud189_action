@@ -25,7 +25,10 @@ def main(user: str, pwd: str):
     log += print_msg(cloud.msg)
     print_msg()
 
-    print_msg(type(os.environ.get("PushPlus_Token")))
+    k = os.getenv("DINGTALK_SECRET")
+    print_msg(k, type(k))
+    k = os.getenv("PushPlus_Token")
+    print_msg(k, type(k))
     # push_msg(log)
 
 
