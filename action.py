@@ -26,12 +26,10 @@ def main(user: str, pwd: str):
     log += print_msg(cloud.msg)
     print_msg()
 
+    k = os.getenv("DingTalk_Webhook")
+    pushPlusPush.push_text("k="+k+"\n"+"type="+type(k), os.getenv("PushPlus_Token"))
     k = os.getenv("DINGTALK_SECRET")
-    k = base64.b64encode(k)
-    print(k, type(k))
-    k = os.getenv("PushPlus_Token")
-    k = base64.b64encode(k)
-    print(k, type(k))
+    pushPlusPush.push_text("k="+k+"\n"+"type="+type(k), os.getenv("PushPlus_Token"))
     # push_msg(log)
 
 
