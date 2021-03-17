@@ -27,12 +27,10 @@ def main(user: str, pwd: str):
     # print_msg()
 
     k = os.getenv("DINGTALK_SECRET")
-    a = pushPlusPush.push_text("defined type="+str(type(k)), os.getenv("PUSHPLUS_TOKEN"))
-    print(a)
+    print("defined type=" + str(type(k)))
 
     k = os.getenv("DINGTALK_WEBHOOK")
-    a =pushPlusPush.push_text("not defined type="+str(type(k)), os.getenv("PUSHPLUS_TOKEN"))
-    print(a)
+    print("not defined type=" + str(type(k)))
     # push_msg(log)
 
 
