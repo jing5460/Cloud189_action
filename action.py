@@ -13,21 +13,21 @@ def push_msg(log):
 
 
 def main(user: str, pwd: str):
-    print_msg()
-    # log 变量记录消息推送内容
-    log = print_msg(hide_username(user) + ":", True)
-    cloud = Client(user, pwd)
-    log += print_msg(cloud.msg)
-    if not cloud.isLogin:
-        exit(-1)
-    cloud.sign()
-    log += print_msg(cloud.msg)
-    cloud.draw()
-    log += print_msg(cloud.msg)
-    print_msg()
+    # print_msg()
+    # # log 变量记录消息推送内容
+    # log = print_msg(hide_username(user) + ":", True)
+    # cloud = Client(user, pwd)
+    # log += print_msg(cloud.msg)
+    # if not cloud.isLogin:
+    #     exit(-1)
+    # cloud.sign()
+    # log += print_msg(cloud.msg)
+    # cloud.draw()
+    # log += print_msg(cloud.msg)
+    # print_msg()
 
     k = os.getenv("DingTalk_Webhook")
-    pushPlusPush.push_text("k="+k+"\n"+"type="+type(k), os.getenv("PushPlus_Token"))
+    pushPlusPush.push_text("not defined type="+(k is None), os.getenv("PushPlus_Token"))
     k = os.getenv("DINGTALK_SECRET")
     pushPlusPush.push_text("k="+k+"\n"+"type="+type(k), os.getenv("PushPlus_Token"))
     # push_msg(log)

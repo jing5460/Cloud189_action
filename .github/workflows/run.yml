@@ -24,8 +24,8 @@ jobs:
       - name: 执行任务
         env:
           DINGTALK_WEBHOOK: ${{ secrets.DingTalk_Webhook }}
-          DINGTALK_SECRET: ${{ secrets.DingTalk_Secret }}
-          PUSHPLUS_TOKEN: ${{ secrets.PushPlus_Token }}
+          DINGTALK_SECRET: ${{ secrets.DINGTALK_SECRET }}
+          PUSHPLUS_TOKEN: ${{ secrets.PUSHPLUS_TOKEN }}
         run: |
           OLD_IFS=$IFS
           IFS=$'\n'
