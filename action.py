@@ -25,7 +25,8 @@ def main(user: str, pwd: str):
     log += print_msg(cloud.msg)
     print_msg()
 
-    push_msg(log)
+    print_msg(os.environ.get("DINGTALK_WEBHOOK"), type(os.environ.get("DINGTALK_WEBHOOK")))
+    # push_msg(log)
 
 
 def hide_username(name: str) -> str:
