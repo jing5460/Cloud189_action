@@ -28,9 +28,13 @@ def main(user: str, pwd: str):
 
     k = os.getenv("DINGTALK_SECRET")
     print("defined type=" + str(type(k)))
-
+    print(k)
+    print(len(k))
+    print()
     k = os.getenv("DINGTALK_WEBHOOK")
     print("not defined type=" + str(type(k)))
+    print(k)
+    print(len(k))
     # push_msg(log)
 
 
