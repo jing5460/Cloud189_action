@@ -1,3 +1,4 @@
+import base64
 import os
 import sys
 from cloud189app import *
@@ -26,9 +27,11 @@ def main(user: str, pwd: str):
     print_msg()
 
     k = os.getenv("DINGTALK_SECRET")
-    print_msg(k, type(k))
+    k = base64.b64encode(k)
+    print(k, type(k))
     k = os.getenv("PushPlus_Token")
-    print_msg(k, type(k))
+    k = base64.b64encode(k)
+    print(k, type(k))
     # push_msg(log)
 
 
