@@ -1,4 +1,3 @@
-import base64
 import os
 import sys
 from cloud189app import *
@@ -6,36 +5,31 @@ from extends import *
 
 
 def push_msg(log):
-    if "DINGTALK_WEBHOOK" in os.environ and "DINGTALK_SECRET" in os.environ:
-        dingTalkPush.push_text(log, os.environ.get("DINGTALK_WEBHOOK"), os.environ.get("DINGTALK_SECRET"))
-    if "PUSHPLUS_TOKEN" in os.environ:
-        pushPlusPush.push_text(log, os.environ.get("PUSHPLUS_TOKEN"))
+    DINGTALK_WEBHOOK = os.getenv("DINGTALK_WEBHOOK").strip()
+    DINGTALK_SECRET = os.getenv("DINGTALK_SECRET").strip()
+    PUSHPLUS_TOKEN = os.getenv("PUSHPLUS_TOKEN").strip()
+
+    if len(DINGTALK_WEBHOOK) > 0 and len(DINGTALK_SECRET) > 0:
+        dingTalkPush.push_text(log, DINGTALK_WEBHOOK, DINGTALK_SECRET)
+    if len(PUSHPLUS_TOKEN) > 0:
+        pushPlusPush.push_text(log, PUSHPLUS_TOKEN)
 
 
 def main(user: str, pwd: str):
-    # print_msg()
-    # # log 变量记录消息推送内容
-    # log = print_msg(hide_username(user) + ":", True)
-    # cloud = Client(user, pwd)
-    # log += print_msg(cloud.msg)
-    # if not cloud.isLogin:
-    #     exit(-1)
-    # cloud.sign()
-    # log += print_msg(cloud.msg)
-    # cloud.draw()
-    # log += print_msg(cloud.msg)
-    # print_msg()
+    print_msg()
+    # log 变量记录消息推送内容
+    log = print_msg(hide_username(user) + ":", True)
+    cloud = Client(user, pwd)
+    log += print_msg(cloud.msg)
+    if not cloud.isLogin:
+        exit(-1)
+    cloud.sign()
+    log += print_msg(cloud.msg)
+    cloud.draw()
+    log += print_msg(cloud.msg)
+    print_msg()
 
-    k = os.getenv("DINGTALK_SECRET")
-    print("defined type=" + str(type(k)))
-    print(k)
-    print(len(k))
-    print()
-    k = os.getenv("DINGTALK_WEBHOOK")
-    print("not defined type=" + str(type(k)))
-    print(k)
-    print(len(k))
-    # push_msg(log)
+    push_msg(log)
 
 
 def hide_username(name: str) -> str:
