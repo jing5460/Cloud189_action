@@ -25,7 +25,7 @@ def main(user: str, pwd: str):
     log += print_msg(cloud.msg)
     print_msg()
 
-    print_msg(os.environ.get("DINGTALK_WEBHOOK"), type(os.environ.get("DINGTALK_WEBHOOK")))
+    print_msg(type(os.environ.get("PushPlus_Token")))
     # push_msg(log)
 
 
