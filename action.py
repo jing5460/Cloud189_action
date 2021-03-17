@@ -1,19 +1,31 @@
+import os
 import sys
 from cloud189app import *
+from extends import *
+
+
+def push_msg(log):
+    if "DINGTALK_WEBHOOK" in os.environ and "DINGTALK_SECRET" in os.environ:
+        dingTalkPush.push_text(log, os.environ.get("DINGTALK_WEBHOOK"), os.environ.get("DINGTALK_SECRET"))
+    if "PUSHPLUS_TOKEN" in os.environ:
+        pushPlusPush.push_text(log, os.environ.get("PUSHPLUS_TOKEN"))
 
 
 def main(user: str, pwd: str):
     print_msg()
-    print_msg(hide_username(user) + ":", True)
+    # log 变量记录消息推送内容
+    log = print_msg(hide_username(user) + ":", True)
     cloud = Client(user, pwd)
-    print_msg(cloud.msg)
+    log += print_msg(cloud.msg)
     if not cloud.isLogin:
         exit(-1)
     cloud.sign()
-    print_msg(cloud.msg)
+    log += print_msg(cloud.msg)
     cloud.draw()
-    print_msg(cloud.msg)
+    log += print_msg(cloud.msg)
     print_msg()
+
+    push_msg(log)
 
 
 def hide_username(name: str) -> str:
@@ -24,13 +36,16 @@ def hide_username(name: str) -> str:
     return name[:b_index] + "*" * fill_len + name[-e_index:]
 
 
-def print_msg(msg: str = "", isFirstLine: bool = False):
+def print_msg(msg: str = "", isFirstLine: bool = False) -> str:
     if isFirstLine or msg == "":
         indent = ""
     else:
         indent = " " * 4
         msg = msg.replace("\n", "\n"+indent)
-    print(indent + msg)
+    msg = indent + msg + "\n"
+
+    print(msg, end='')
+    return msg
 
 
 if __name__ == '__main__':
