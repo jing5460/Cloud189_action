@@ -3,10 +3,10 @@ import requests
 
 def push_text(msg: str, token: str) -> str:
     data = {
-        "template": "html",
+        "template": "markdown",
         "token": token,
         "title": "cloud189app-action",
-        "content": msg.replace("\n", "<br>").replace(" ", "&nbsp;")
+        "content": msg.replace(" ", "&nbsp;").replace("\n", "  \n")
     }
     response = requests.post("http://www.pushplus.plus/send", data=data)
 
