@@ -193,6 +193,8 @@ class Client:
         response = utils.sendGetRequest(self.__session, url, headers)
         result = response.json()
         self.msg = "签到抽奖: "
+        print("debug:")
+        print(response)
         if "prizeName" in result:
             self.msg += result['prizeName']
         elif "errorCode" in result:

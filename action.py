@@ -21,10 +21,11 @@ def push_msg(log):
 
 
 def main(user: str, pwd: str):
+    log = ""
     try:
         print_msg()
         # log 变量记录消息推送内容
-        log = print_msg(hide_username(user) + ":", True)
+        log += print_msg(hide_username(user) + ":", True)
         cloud = Client(user, pwd)
         log += print_msg(cloud.msg)
         if not cloud.isLogin:
@@ -34,7 +35,7 @@ def main(user: str, pwd: str):
         cloud.draw()
         log += print_msg(cloud.msg)
     except Exception:
-        log = "任务执行失败, 请重试!"
+        log += "任务执行失败, 请重试!"
         print_msg(push_msg(log))
 
 
