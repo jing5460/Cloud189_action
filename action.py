@@ -17,7 +17,7 @@ def push_msg(log):
         r = pushPlusPush.push_text(log, PUSHPLUS_TOKEN)
         msg += "\nPushPlus推送: " + r
 
-    return msg + "\n"
+    return msg
 
 
 def main(user: str, pwd: str):
