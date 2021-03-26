@@ -6,9 +6,9 @@ from extends import *
 
 def push_msg(log):
     msg = ""
-    DINGTALK_WEBHOOK = os.getenv("DINGTALK_WEBHOOK").strip()
-    DINGTALK_SECRET = os.getenv("DINGTALK_SECRET").strip()
-    PUSHPLUS_TOKEN = os.getenv("PUSHPLUS_TOKEN").strip()
+    DINGTALK_WEBHOOK = os.getenv("DINGTALK_WEBHOOK").strip() if os.getenv("DINGTALK_WEBHOOK") is not None else ""
+    DINGTALK_SECRET = os.getenv("DINGTALK_SECRET").strip() if os.getenv("DINGTALK_SECRET") is not None else ""
+    PUSHPLUS_TOKEN = os.getenv("PUSHPLUS_TOKEN").strip() if os.getenv("PUSHPLUS_TOKEN") is not None else ""
 
     if len(DINGTALK_WEBHOOK) > 0 and len(DINGTALK_SECRET) > 0:
         r = dingTalkPush.push_text(log, DINGTALK_WEBHOOK, DINGTALK_SECRET)
@@ -17,23 +17,25 @@ def push_msg(log):
         r = pushPlusPush.push_text(log, PUSHPLUS_TOKEN)
         msg += "\nPushPlus推送: " + r
 
-    return msg
+    return msg + "\n"
 
 
 def main(user: str, pwd: str):
-    print_msg()
-    # log 变量记录消息推送内容
-    log = print_msg(hide_username(user) + ":", True)
-    cloud = Client(user, pwd)
-    log += print_msg(cloud.msg)
-    if not cloud.isLogin:
-        exit(-1)
-    cloud.sign()
-    log += print_msg(cloud.msg)
-    cloud.draw()
-    log += print_msg(cloud.msg)
-
-    print_msg(push_msg(log))
+    try:
+        print_msg()
+        # log 变量记录消息推送内容
+        log = print_msg(hide_username(user) + ":", True)
+        cloud = Client(user, pwd)
+        log += print_msg(cloud.msg)
+        if not cloud.isLogin:
+            exit(-1)
+        cloud.sign()
+        log += print_msg(cloud.msg)
+        cloud.draw()
+        log += print_msg(cloud.msg)
+    except Exception:
+        log = "任务执行失败, 请重试!"
+        print_msg(push_msg(log))
 
 
 def hide_username(name: str) -> str:
@@ -49,7 +51,7 @@ def print_msg(msg: str = "", isFirstLine: bool = False) -> str:
         indent = ""
     else:
         indent = " " * 4
-        msg = msg.replace("\n", "\n"+indent)
+        msg = msg.replace("\n", "\n" + indent)
     msg = indent + msg + "\n"
 
     print(msg, end='')
