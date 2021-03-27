@@ -35,7 +35,7 @@ def main(user: str, pwd: str):
         cloud.draw()
         log += print_msg(cloud.msg)
     except Exception:
-        log += "任务执行失败, 请重试!"
+        log += print_msg("任务执行失败, 请重试!")
     finally:
         print_msg(push_msg(log))
 
