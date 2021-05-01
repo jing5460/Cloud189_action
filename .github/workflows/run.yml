@@ -27,7 +27,7 @@ jobs:
           DINGTALK_SECRET: ${{ secrets.DINGTALK_SECRET }}
           PUSHPLUS_TOKEN: ${{ secrets.PUSHPLUS_TOKEN }}
         run: |
-          ACCS=${{ secrets.ACCS }}
+          ACCS="${{ secrets.ACCS }}"
           OLD_IFS=$IFS
           IFS=$'\n'
           acc_list=($ACCS)
