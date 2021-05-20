@@ -19,3 +19,7 @@
 ## 使用教程
 - [部署指南](docs/deploy.md)
 - [配置消息推送](docs/message_push.md)
+
+
+## 注意
+[关于使用 Actions 的注意事项](https://github.com/xtyuns/cloud189app-action/issues/15)
